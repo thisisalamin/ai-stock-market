@@ -1,28 +1,48 @@
-# Vue Mistral Notes
+# 7️⃣ AI-Powered Stock Market & Crypto Analyst 📈
 
-A Vue 3 application for creating and managing notes with AI-powered summaries using the Mistral API.
+An intelligent Vue 3 application that provides AI-driven insights for stocks and cryptocurrency investments using Mistral AI.
 
-## Features
+## 🔹 What It Does?
 
-- User authentication with Supabase
-- Create, read, and delete notes
-- Automatic note summarization using Mistral AI
-- Responsive design
+- Users ask about stocks or crypto, and AI provides data-driven insights
+- AI analyzes market trends and predicts potential risks
+- Explains complex financial terms in simple, understandable language
+- Provides personalized investment recommendations
+
+## 🔹 Unique Features
+
+- Smart Investment Advisor: "Should I buy this stock?" → AI gives data-driven answers
+- Pattern Recognition: AI detects market patterns and sends timely alerts
+- Risk Analysis: Personalized investment strategy based on user's risk tolerance
+- Real-time Updates: Get instant insights about market movements
+
+### Examples
+👉 "Bitcoin is down 5% today. Should you buy the dip?"
+👉 "Apple's stock is trending due to a new product launch!"
+
+## Tech Stack
+
+- Frontend: Vue.js 3 (Composition API)
+- Backend & Auth: Supabase
+- AI Analysis: Mistral AI
+- Market Data: Financial Market API
+- Build Tool: Vite
 
 ## Setup
 
 ### Prerequisites
 
 - Node.js and npm installed
-- Supabase account (free tier works fine)
+- Supabase account
 - Mistral API key
+- Market Data API key
 
 ### Installation
 
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd vue-mistral-notes
+cd ai-stock-market
 ```
 
 2. Install dependencies:
@@ -30,71 +50,57 @@ cd vue-mistral-notes
 npm install
 ```
 
-3. Set up environment variables:
-   - Create a `.env` file in the root directory
-   - Add the following variables:
+3. Configure environment variables:
+   Create a `.env` file with:
 ```
 VITE_SUPABASE_URL=your-supabase-url
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 VITE_MISTRAL_API_KEY=your-mistral-api-key
+VITE_MARKET_API_KEY=your-market-api-key
 ```
 
-4. Set up your Supabase database:
-   - Go to your Supabase project's SQL Editor
-   - Run the following SQL commands:
+4. Set up Supabase database:
 
 ```sql
--- Create notes table if it doesn't exist
-CREATE TABLE IF NOT EXISTS public.notes (
+-- Create portfolio table
+CREATE TABLE IF NOT EXISTS public.portfolios (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  content TEXT NOT NULL,
-  summary TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+  stock_symbol TEXT NOT NULL,
+  quantity NUMERIC NOT NULL,
+  purchase_price NUMERIC NOT NULL,
+  purchase_date TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Set up row-level security
-ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
+-- Enable row level security
+ALTER TABLE public.portfolios ENABLE ROW LEVEL SECURITY;
 
--- Create policies
-CREATE POLICY "Users can view their own notes" 
-  ON public.notes 
-  FOR SELECT 
+-- Create access policies
+CREATE POLICY "Users can view their own portfolio" 
+  ON public.portfolios FOR SELECT 
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert their own notes" 
-  ON public.notes 
-  FOR INSERT 
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own notes" 
-  ON public.notes 
-  FOR UPDATE 
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own notes" 
-  ON public.notes 
-  FOR DELETE 
+CREATE POLICY "Users can manage their portfolio" 
+  ON public.portfolios FOR ALL 
   USING (auth.uid() = user_id);
 ```
 
-5. Run the development server:
+5. Start development server:
 ```bash
 npm run dev
 ```
 
 ## Usage
 
-1. Sign up for an account or log in
-2. Create notes using the text area
-3. Use the "Summarize" button to get an AI-generated summary
-4. Delete notes as needed
+1. Create an account or login
+2. Ask AI about market trends and specific stocks/crypto
+3. Set up your portfolio and risk preferences
+4. Receive AI-powered insights and alerts
 
-## Technologies Used
+## Features Coming Soon
 
-- Vue 3 (Composition API)
-- Vue Router
-- Supabase (Authentication & Database)
-- Mistral AI API
-- Vite (Build tool)
+- Portfolio performance tracking
+- Custom alert settings
+- Advanced technical analysis
+- Market sentiment analysis
+- Multi-currency support
