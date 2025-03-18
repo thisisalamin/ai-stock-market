@@ -1,11 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import AuthView from './views/AuthView.vue';
 import AnalysisView from './views/AnalysisView.vue';
 import { supabase } from './supabase';
 
 const routes = [
-  { path: '/', component: AuthView, meta: { requiresAuth: false } },
-  { path: '/analysis', component: AnalysisView, meta: { requiresAuth: true } }
+  {
+    path: '/',
+    redirect: '/analysis' // Redirect root to analysis page
+  },
+  {
+    path: '/analysis',
+    name: 'analysis',
+    component: AnalysisView,
+    meta: { requiresAuth: true }
+  }
 ];
 
 export const router = createRouter({
@@ -15,14 +22,14 @@ export const router = createRouter({
 
 // Navigation guard
 router.beforeEach(async (to, from, next) => {
-  const { data } = await supabase.auth.getSession();
-  const isLoggedIn = !!data.session;
-  
-  if (to.meta.requiresAuth && !isLoggedIn) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+
+  if (requiresAuth && !session) {
     next('/');
-  } else if (to.path === '/' && isLoggedIn) {
-    next('/analysis');
   } else {
     next();
   }
 });
+
+export default router;

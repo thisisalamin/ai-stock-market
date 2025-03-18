@@ -1,5 +1,6 @@
 <template>
   <div class="min-h-screen bg-slate-50">
+    <!-- Database Setup Error -->
     <div v-if="dbError" class="max-w-3xl mx-auto p-6 mt-8 bg-amber-50/50 border border-amber-200 rounded-xl backdrop-blur-sm">
       <h3 class="text-xl font-semibold text-yellow-800 mb-3">Database Setup Required</h3>
       <p class="text-yellow-700 mb-4">{{ dbError }}</p>
@@ -19,17 +20,24 @@
     </div>
 
     <div v-else-if="!loading" class="min-h-screen">
+      <!-- Login Screen -->
       <div v-if="!session" class="min-h-screen flex items-center justify-center p-4">
         <div class="max-w-md w-full bg-white/50 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-slate-200">
           <div class="text-center space-y-3">
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">AI-Powered Stock Market & Crypto Analyst</h1>
-            <p class="text-slate-500">Sign in to access your data</p>
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              AI Market Advisor
+            </h1>
+            <p class="text-slate-500">Your personal AI-powered financial analyst</p>
+            <div class="text-sm text-slate-600 space-y-2">
+              <p>✨ Get AI-powered market insights</p>
+              <p>📊 Track your portfolio performance</p>
+              <p>🔔 Receive market trend alerts</p>
+            </div>
           </div>
           <button @click="signInWithGoogle" 
             :disabled="loggingIn"
             class="mt-6 w-full flex items-center justify-center px-4 py-2.5 border border-slate-200 
-              rounded-lg text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition-all
-              duration-200 hover:shadow focus:outline-none focus:ring-2 focus:ring-slate-200">
+              rounded-lg text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition-all">
             <svg class="w-5 h-5 mr-3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -41,16 +49,19 @@
         </div>
       </div>
       
+      <!-- Main App Layout -->
       <div v-else>
         <header class="bg-white/50 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-14 items-center">
-              <h1 class="text-lg font-semibold text-slate-700">AI Market Analyst</h1>
-              <button @click="handleLogout" 
-                class="px-4 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 
-                  shadow-sm transition-all duration-200">
-                Sign Out
-              </button>
+            <div class="flex justify-between h-16 items-center">
+              <h1 class="text-xl font-bold text-blue-600">AI Market Advisor</h1>
+              <div class="flex items-center space-x-4">
+                <span class="text-slate-600">{{ session.user.email }}</span>
+                <button @click="handleLogout" 
+                  class="px-4 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700">
+                  Sign Out
+                </button>
+              </div>
             </div>
           </div>
         </header>
@@ -58,8 +69,9 @@
       </div>
     </div>
 
+    <!-- Loading Screen -->
     <div v-else class="min-h-screen flex items-center justify-center">
-      <div class="animate-spin rounded-full h-8 w-8 border-2 border-slate-800 border-t-transparent"></div>
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
     </div>
   </div>
 </template>
