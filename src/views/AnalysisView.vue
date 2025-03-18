@@ -58,21 +58,28 @@
       <!-- Market Trends & Portfolio Panel -->
       <div class="space-y-6">
         <div class="bg-white/50 backdrop-blur-sm rounded-xl border border-slate-200 p-6 shadow-sm">
-          <h2 class="text-lg font-semibold text-slate-800 mb-4">Market Trends</h2>
-          <div v-if="marketTrends.length" class="space-y-3">
+          <h2 class="text-lg font-semibold text-slate-800 mb-4">Live Market Trends</h2>
+          <div v-if="marketTrends?.length" class="space-y-3">
             <div v-for="trend in marketTrends" :key="trend.id"
               class="p-3 bg-white rounded-lg border border-slate-100">
-              <div class="flex items-center space-x-2">
-                <span :class="trend.type === 'up' ? 'text-green-500' : 'text-red-500'">
-                  {{ trend.type === 'up' ? '↑' : '↓' }}
-                </span>
-                <span class="font-medium">{{ trend.symbol }}</span>
+              <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                  <span :class="trend.type === 'up' ? 'text-green-500' : 'text-red-500'">
+                    {{ trend.type === 'up' ? '↑' : '↓' }}
+                  </span>
+                  <span class="font-medium">{{ trend.symbol }}</span>
+                </div>
+                <div class="text-right">
+                  <div class="font-medium">${{ trend.price.toFixed(2) }}</div>
+                  <div :class="trend.type === 'up' ? 'text-green-600' : 'text-red-600'" class="text-sm">
+                    {{ trend.percentChange > 0 ? '+' : ''}}{{ trend.percentChange.toFixed(2) }}%
+                  </div>
+                </div>
               </div>
-              <p class="text-sm text-slate-600 mt-1">{{ trend.description }}</p>
             </div>
           </div>
           <div v-else class="text-center text-slate-500 py-4">
-            No market trends available
+            Loading market data...
           </div>
         </div>
 
@@ -86,10 +93,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
 import { supabase } from '../supabase';
 import axios from 'axios';
 import { marked } from 'marked';
+import { getQuote } from '../services/finnhubService';
+import { connectWebSocket, subscribeToSymbol, unsubscribeFromSymbol, subscribe, closeConnection } from '../services/websocketService';
 
 const analysisType = ref('stock');
 const symbol = ref('');
@@ -167,10 +176,95 @@ const saveAnalysis = async (analysis) => {
   });
 };
 
-// Initialize with some sample market trends
-marketTrends.value = [
-  { id: 1, type: 'up', symbol: 'BTC', description: 'Bitcoin showing strong momentum' },
-  { id: 2, type: 'down', symbol: 'TSLA', description: 'Tesla facing selling pressure' }
-];
+// Track multiple symbols for market trends
+const trackedSymbols = ref(['AAPL', 'MSFT', 'GOOGL', 'AMZN']);
+const updateInterval = ref(null);
+
+// Fetch quote for a single symbol using service
+const fetchQuote = async (symbol) => {
+  if (!symbol) return null;
+  
+  try {
+    const quote = await getQuote(symbol);
+    
+    if (quote && quote.c) {
+      return {
+        id: Date.now(),
+        type: quote.d > 0 ? 'up' : 'down',
+        symbol: symbol,
+        description: `${quote.d > 0 ? 'Up' : 'Down'} ${Math.abs(quote.dp).toFixed(2)}% at $${quote.c}`,
+        price: quote.c,
+        lastClose: quote.pc,
+        change: quote.d,
+        percentChange: quote.dp
+      };
+    }
+    return null;
+  } catch (err) {
+    console.error(`Error fetching quote for ${symbol}:`, err);
+    return null;
+  }
+};
+
+// Update all market trends
+const updateMarketTrends = async () => {
+  try {
+    const quotes = await Promise.all(
+      trackedSymbols.value.map(symbol => fetchQuote(symbol))
+    );
+    const validQuotes = quotes.filter(quote => quote !== null);
+    if (validQuotes.length > 0) {
+      marketTrends.value = validQuotes;
+    }
+  } catch (error) {
+    console.error('Error updating market trends:', error);
+  }
+};
+
+// Initialize WebSocket connection
+onMounted(async () => {
+  marketTrends.value = [];
+  await updateMarketTrends(); // Initial load
+
+  // Setup WebSocket
+  connectWebSocket();
+  const unsubscribe = subscribe((trade) => {
+    const index = marketTrends.value.findIndex(t => t.symbol === trade.s);
+    if (index !== -1) {
+      const trend = marketTrends.value[index];
+      marketTrends.value[index] = {
+        ...trend,
+        price: trade.p,
+        type: trade.p > trend.price ? 'up' : 'down',
+        change: trade.p - trend.lastClose,
+        percentChange: ((trade.p - trend.lastClose) / trend.lastClose) * 100
+      };
+    }
+  });
+
+  // Subscribe to all tracked symbols
+  trackedSymbols.value.forEach(symbol => {
+    subscribeToSymbol(symbol);
+  });
+
+  // Cleanup
+  onUnmounted(() => {
+    trackedSymbols.value.forEach(symbol => {
+      unsubscribeFromSymbol(symbol);
+    });
+    unsubscribe();
+    closeConnection();
+    if (updateInterval.value) {
+      clearInterval(updateInterval.value);
+    }
+  });
+});
+
+// Watch for symbol changes
+watch(symbol, () => {
+  if (symbol.value) {
+    fetchQuote();
+  }
+});
 </script>
 
